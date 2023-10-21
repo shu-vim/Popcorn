@@ -54,11 +54,11 @@ if !exists('g:PopcornItems')
     ]
 endif
 
-def g:Popcorn_clear()
+def! g:Popcorn_clear()
     g:PopcornItems = []
 enddef
 
-def g:Popcorn_add(item: dict<any>)
+def! g:Popcorn_add(item: dict<any>)
     if !has_key(item, 'name')
         echoe 'name required'
         return
@@ -72,7 +72,7 @@ def g:Popcorn_add(item: dict<any>)
     add(g:PopcornItems, item)
 enddef
 
-def g:Popcorn_remove(name: string)
+def! g:Popcorn_remove(name: string)
     var idx = -1
     for i in range(len(g:PopcornItems))
         if g:PopcornItems[i].name == name
@@ -86,7 +86,7 @@ def g:Popcorn_remove(name: string)
     endif
 enddef
 
-def g:Popcorn_popup()
+def! g:Popcorn_popup()
     if type(g:PopcornItems) != 3 || len(g:PopcornItems) == 0
         return
     endif
