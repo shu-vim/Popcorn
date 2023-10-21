@@ -14,7 +14,7 @@ You can define your own pop-up menu.
 ```
 
 - j, k: up, down
-- h, l: menu level (h: go up, l: go down)
+- h, l(enter): menu level (h: go up, l: go down)
 - enter: execute
 - q, esc: quit
 

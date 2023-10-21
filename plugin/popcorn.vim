@@ -127,6 +127,9 @@ def Filter(winid: number, key: string): bool
             var defidx: number = IndexOfDefault(parent)
             if defidx != -1
                 popup_close(winid, defidx + 1)
+            else
+                # render child items
+                Redraw(winid, bufnr, parent, lnum)
             endif
             return true
         endif
