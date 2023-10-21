@@ -48,7 +48,8 @@ You can also use g:Popcorn_clear(), g:Popcorn_add() and g:Popcorn_remove().
 2. Must have one of (`execute`, `executeeval`, `sub`)
 3. `nameeval` is eval()-ed when displayed (priority: `nameeval` > `name`)
 4. `executeeval` is eval()-ed when executed (priority: `executeeval` > `execute`)
-5. `default` item is executed when enter is pressed on its parent
+5. 'execute' (and 'executeeval') can be a string or a list of strings
+6. 'default' item is executed when enter is pressed on its parent
 
 ---
 

@@ -32,7 +32,8 @@ vim9script
 #   2. Must have one of ('execute', 'executeeval', 'sub')
 #   3. 'nameeval' is eval()-ed when displayed ('nameeval' > 'name')
 #   4. 'executeeval' is eval()-ed when executed ('executeeval' > 'execute')
-#   5. 'default' item is executed when enter is pressed on its parent
+#   5. 'execute' (and 'executeeval') can be a string or a list of strings
+#   6. 'default' item is executed when enter is pressed on its parent
 #
 # Maintainer: Shuhei Kubota <kubota.shuhei+vim@gmail.com>
 
@@ -181,10 +182,31 @@ def Callback(winid: number, result: any)
 
     var item = parent.sub[result - 1]
     if has_key(item, 'executeeval')
-        var cmd = eval(item.executeeval)
-        execute cmd
+        if type(item.executeeval) == 3 # list
+            for cmd in item.executeeval
+                try
+                    execute eval(cmd)
+                catch
+                    echoe 'executeeval(' .. cmd .. '): ' .. v:exception
+                    return
+                endtry
+            endfor
+        else
+            execute eval(item.executeeval)
+        endif
     else
-        execute item.execute
+        if type(item.execute) == 3 # list
+            for cmd in item.execute
+                try
+                    execute cmd
+                catch
+                    echoe 'execute(' .. cmd .. '): ' .. v:exception
+                    return
+                endtry
+            endfor
+        else
+            execute item.execute
+        endif
     endif
 enddef
 
