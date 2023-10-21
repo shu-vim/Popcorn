@@ -31,9 +31,11 @@ g:PopcornItems = [
     ]},
     {name: 'Window', sub: [
         {name: 'Alt', executeeval: '"buffer " .. bufnr("#")', default: true},
+        {name: '-'},
         {name: 'Split(--)', execute: 'split'},
         {name: 'Split(|)', execute: 'vsplit'},
     ]},
+    {name: '-'},
     {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', execute: 'Popcorn'},
 ]
 ```
@@ -50,10 +52,12 @@ You can also use g:Popcorn_clear(), g:Popcorn_add() and g:Popcorn_remove().
 4. `executeeval` is eval()-ed when executed (priority: `executeeval` > `execute`)
 5. 'execute' (and 'executeeval') can be a string or a list of strings
 6. 'default' item is executed when enter is pressed on its parent
+7. A separator is {name: '-'}
 
 ### Highlights
 
 - g:PopcornGroupHighlight = 'Comment'
+- g:PopcornSeparatorHighlight = 'Comment'
 
 ---
 

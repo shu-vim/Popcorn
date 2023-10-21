@@ -5,6 +5,11 @@ command! Popcorn g:Popcorn_popup()
 if !exists('g:PopcornGroupHighlight')
     g:PopcornGroupHighlight = 'Comment'
 endif
+
+if !exists('g:PopcornSeparatorHighlight')
+    g:PopcornSeparatorHighlight = 'Comment'
+endif
+
 if !exists('g:PopcornItems')
     g:PopcornItems = [
         {name: 'LSP', sub: [
@@ -14,9 +19,11 @@ if !exists('g:PopcornItems')
         ]},
         {name: 'Window', sub: [
             {name: 'Alt', executeeval: '"buffer " .. bufnr("#")', default: true},
+            {name: '-'},
             {name: 'Split(--)', execute: 'split'},
             {name: 'Split(|)', execute: 'vsplit'},
         ]},
+        {name: '-'},
         {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', execute: 'Popcorn'},
     ]
 endif
@@ -31,7 +38,7 @@ def! g:Popcorn_add(item: dict<any>)
         return
     endif
 
-    if !has_key(item, 'execute') && !has_key(item, 'executeeval') && !has_key(item, 'sub')
+    if !has_key(item, 'execute') && !has_key(item, 'executeeval') && !has_key(item, 'sub') && item.name != '-'
         echoe 'execute, executeeval or sub is required'
         return
     endif
@@ -73,6 +80,9 @@ def! g:Popcorn_popup()
         callback: Callback,
     })
     setwinvar(winid, 'Popcorn_parentIndices', [])
+
+    matchadd(g:PopcornGroupHighlight, '\V (\.\*)\s\*>>', 0, -1, {'window': winid})
+    matchadd(g:PopcornSeparatorHighlight, '\V-\{3,}', 0, -1, {'window': winid})
 enddef
 
 def Root(items: list<dict<any>>): dict<any>
@@ -134,6 +144,23 @@ def Filter(winid: number, key: string): bool
                 # render child items
                 Redraw(winid, bufnr, parent, lnum)
             endif
+            return true
+        endif
+    endif
+
+    # skip '-'
+    if key == 'j' || key == 'k' || key == "\<down>" || key == "\<up>"
+        var dir = (key == 'j' || key == "\<down>") ? 1 : -1
+        call win_execute(winid, 'w:lastlnum = line("$")')
+        var lastlnum = getwinvar(winid, 'lastlnum', 1)
+
+        var nxt = (lnum + dir + lastlnum - 1) % lastlnum + 1
+        var count = 0
+        while parent.sub[nxt - 1].name == '-' && nxt != lnum
+            nxt = (nxt + dir + lastlnum - 1) % lastlnum + 1
+        endwhile
+        if nxt != lnum + dir
+            win_execute(winid, 'normal ' .. nxt .. 'gg')
             return true
         endif
     endif
@@ -212,7 +239,11 @@ def BuildItemLines(parent: dict<any>): list<string>
 
     var lines: list<string> = []
     for item in parent.sub
-        lines = add(lines, item.name_ .. (has_key(item, 'sub') ? repeat(' ', maxwid - strdisplaywidth(item.name_)) .. ' >>' : ''))
+        if item.name == '-'
+            lines = add(lines, repeat('-', maxwid))
+        else
+            lines = add(lines, item.name_ .. (has_key(item, 'sub') ? repeat(' ', maxwid - strdisplaywidth(item.name_)) .. ' >>' : ''))
+        endif
     endfor
 
     return lines
