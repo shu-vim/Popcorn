@@ -1,42 +1,5 @@
 vim9script
 
-# Popcorn
-#
-# You can define your own pop-up menu.
-#
-# Usage:
-#   :Popcorn
-#
-#   j, k: up, down
-#   h, l: menu level (h: go up, l: go down)
-#   enter: execute
-#   q, esc: quit
-#
-# Customize:
-#   g:PopcornItems = [
-#       {name: 'LSP', sub: [
-#           {name: 'Hover', execute: 'LspHover', default: true},
-#           {name: 'Definition', execute: 'LspDefinition'},
-#           {name: 'Rename', execute: 'LspRename'},
-#       ]},
-#       {name: 'Window', sub: [
-#           {name: 'Alt', executeeval: '"buffer " .. bufnr("#")', default: true},
-#           {name: 'Split(--)', execute: 'split'},
-#           {name: 'Split(|)', execute: 'vsplit'},
-#       ]},
-#       {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', execute: 'Popcorn'},
-#   ]
-#
-#   <Rule>
-#   1. Each item must have 'name'
-#   2. Must have one of ('execute', 'executeeval', 'sub')
-#   3. 'nameeval' is eval()-ed when displayed ('nameeval' > 'name')
-#   4. 'executeeval' is eval()-ed when executed ('executeeval' > 'execute')
-#   5. 'execute' (and 'executeeval') can be a string or a list of strings
-#   6. 'default' item is executed when enter is pressed on its parent
-#
-# Maintainer: Shuhei Kubota <kubota.shuhei+vim@gmail.com>
-
 command! Popcorn g:Popcorn_popup()
 
 if !exists('g:PopcornItems')
