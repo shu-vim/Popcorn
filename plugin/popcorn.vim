@@ -2,6 +2,9 @@ vim9script
 
 command! Popcorn g:Popcorn_popup()
 
+if !exists('g:PopcornGroupHighlight')
+    g:PopcornGroupHighlight = 'Comment'
+endif
 if !exists('g:PopcornItems')
     g:PopcornItems = [
         {name: 'LSP', sub: [

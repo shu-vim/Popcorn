@@ -51,6 +51,10 @@ You can also use g:Popcorn_clear(), g:Popcorn_add() and g:Popcorn_remove().
 5. 'execute' (and 'executeeval') can be a string or a list of strings
 6. 'default' item is executed when enter is pressed on its parent
 
+### Highlights
+
+- g:PopcornGroupHighlight = 'Comment'
+
 ---
 
 Maintainer: Shuhei Kubota <kubota.shuhei+vim@gmail.com>
