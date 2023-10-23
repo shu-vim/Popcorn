@@ -81,8 +81,8 @@ def! g:Popcorn_popup()
     })
     setwinvar(winid, 'Popcorn_parentIndices', [])
 
-    matchadd(g:PopcornGroupHighlight, '\V (\.\*)\s\*>>', 0, -1, {'window': winid})
-    matchadd(g:PopcornSeparatorHighlight, '\V-\{3,}', 0, -1, {'window': winid})
+    matchadd(g:PopcornGroupHighlight, '\v ([(].*[)])?\s*[>]{2}', 0, -1, {'window': winid})
+    matchadd(g:PopcornSeparatorHighlight, '\v-{3,}', 0, -1, {'window': winid})
 enddef
 
 def Root(items: list<dict<any>>): dict<any>
