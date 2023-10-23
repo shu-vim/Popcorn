@@ -13,10 +13,22 @@ You can define your own pop-up menu.
 :Popcorn
 ```
 
+### normal mode
+
 - j, k: up, down
 - h, l(enter): menu level (h: go up, l: go down)
 - enter: execute
 - q, esc: quit
+- /: search mode
+- upper case: search mode when g:PopcornSearchOnUpper
+
+### search mode
+
+- ctrl-n, ctrl-p: up, down
+- enter: execute
+- esc: normal mode
+- backspace, ctrl-h: backspace
+- alpha nuberic: search
 
 ## Customize
 
@@ -58,6 +70,7 @@ You can also use g:Popcorn_clear(), g:Popcorn_add() and g:Popcorn_remove().
 
 - g:PopcornGroupHighlight = 'Comment'
 - g:PopcornSeparatorHighlight = 'Comment'
+- g:PopcornSearchOnUpper = false
 
 ---
 

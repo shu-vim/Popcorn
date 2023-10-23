@@ -10,6 +10,10 @@ if !exists('g:PopcornSeparatorHighlight')
     g:PopcornSeparatorHighlight = 'Comment'
 endif
 
+if !exists('g:PopcornSearchOnUpper')
+    g:PopcornSearchOnUpper = false
+endif
+
 if !exists('g:PopcornItems')
     g:PopcornItems = [
         {name: 'LSP', sub: [
@@ -80,13 +84,58 @@ def! g:Popcorn_popup()
         callback: Callback,
     })
     setwinvar(winid, 'Popcorn_parentIndices', [])
+    setwinvar(winid, 'Popcorn_search', '')
 
     matchadd(g:PopcornGroupHighlight, '\v ([(].*[)])?\s*[>]{2}', 0, -1, {'window': winid})
     matchadd(g:PopcornSeparatorHighlight, '\v-{3,}', 0, -1, {'window': winid})
 enddef
 
 def Root(items: list<dict<any>>): dict<any>
-    return {name: '', sub: g:PopcornItems}
+    return {name: '', sub: deepcopy(items)}
+enddef
+
+def FilterSearch(winid: number, key: string): bool
+    call win_execute(winid, 'w:lnum = line(".")')
+    var lnum = getwinvar(winid, 'lnum', 1)
+
+    var indices = getwinvar(winid, 'Popcorn_parentIndices', [])
+    var bufnr = winbufnr(winid)
+
+    var root = Root(g:PopcornItems)
+    var parent = DeriveParent(root, indices)
+
+    if key == "\<esc>"
+        setwinvar(winid, 'Popcorn_search', '')
+        popup_setoptions(winid, {filter: Filter})
+        popup_setoptions(winid, {callback: Callback})
+        Redraw(winid, bufnr, parent, lnum)
+        return true
+    endif
+
+    if key == "\<c-h>" || key == "\<bs>"
+        var search = getwinvar(winid, 'Popcorn_search', '')
+        search = search[: -2]
+        var searchItems = SearchItems(root, SearchToPattern(search), '')
+
+        RedrawSearch(winid, bufnr, searchItems, lnum, search)
+
+        setwinvar(winid, 'Popcorn_search', search)
+        setwinvar(winid, 'Popcorn_searchItems', searchItems)
+        return true
+    endif
+
+    if key[0] =~ '\v\w'
+        var search = getwinvar(winid, 'Popcorn_search', '') .. key
+        var searchItems = SearchItems(root, SearchToPattern(search), '')
+
+        RedrawSearch(winid, bufnr, searchItems, lnum, search)
+
+        setwinvar(winid, 'Popcorn_search', search)
+        setwinvar(winid, 'Popcorn_searchItems', searchItems)
+        return true
+    endif
+
+    return popup_filter_menu(winid, key)
 enddef
 
 def Filter(winid: number, key: string): bool
@@ -100,8 +149,22 @@ def Filter(winid: number, key: string): bool
     var root = Root(g:PopcornItems)
     var parent = DeriveParent(root, indices)
 
-    if key == 'q'
+    if key == 'q' || key == "\<esc>"
         popup_close(winid, -1)
+        return true
+    endif
+
+    if key == '/' || (g:PopcornSearchOnUpper && key =~ '\v(\u|\d)')
+        popup_setoptions(winid, {filter: FilterSearch})
+        popup_setoptions(winid, {callback: CallbackSearch})
+
+        var search = key == '/' ? '' : key
+        var searchItems = SearchItems(root, SearchToPattern(search), '')
+
+        RedrawSearch(winid, bufnr, searchItems, lnum, search)
+
+        setwinvar(winid, 'Popcorn_search', search)
+        setwinvar(winid, 'Popcorn_searchItems', searchItems)
         return true
     endif
 
@@ -168,6 +231,50 @@ def Filter(winid: number, key: string): bool
     return popup_filter_menu(winid, key)
 enddef
 
+def CallbackSearch(winid: number, result: any)
+    if result == -1
+        return
+    endif
+
+    var search = getwinvar(winid, 'Popcorn_search', '')
+    var searchItems = getwinvar(winid, 'Popcorn_searchItems', [])
+    #echom 'CallbackSearch: search=' .. search
+    #echom 'CallbackSearch: searchItems=' .. string(searchItems)
+
+    if len(searchItems) == 0
+        return
+    endif
+
+    var item = searchItems[result - 1]
+    if has_key(item, 'executeeval')
+        if type(item.executeeval) == 3 # list
+            for cmd in item.executeeval
+                try
+                    execute eval(cmd)
+                catch
+                    echoe 'executeeval(' .. cmd .. '): ' .. v:exception
+                    return
+                endtry
+            endfor
+        else
+            execute eval(item.executeeval)
+        endif
+    else
+        if type(item.execute) == 3 # list
+            for cmd in item.execute
+                try
+                    execute cmd
+                catch
+                    echoe 'execute(' .. cmd .. '): ' .. v:exception
+                    return
+                endtry
+            endfor
+        else
+            execute item.execute
+        endif
+    endif
+enddef
+
 def Callback(winid: number, result: any)
     if result == -1
         return
@@ -217,6 +324,20 @@ def Redraw(winid: number, bufnr: number, parent: dict<any>, lnum: number)
     popup_setoptions(winid, {title: parent.name})
 enddef
 
+def RedrawSearch(winid: number, bufnr: number, items: list<dict<any>>, lnum: number, search: string)
+    #echom 'RedrawSearch: ' .. search
+
+
+    var lines = BuildSearchedItemLines(Root(items))
+    deletebufline(bufnr, 1, 100)
+    setbufline(bufnr, 1, lines)
+    for i in range(lnum - 1)
+        win_execute(winid, 'normal k')
+    endfor
+
+    popup_setoptions(winid, {title: '/' .. search})
+enddef
+
 def BuildItemLines(parent: dict<any>): list<string>
     var maxwid: number = 0
     for item in parent.sub
@@ -249,6 +370,47 @@ def BuildItemLines(parent: dict<any>): list<string>
     return lines
 enddef
 
+def BuildSearchedItemLines(parent: dict<any>): list<string>
+    var lines: list<string> = []
+    for item in parent.sub
+        lines = add(lines, item.name)
+    endfor
+    return lines
+enddef
+
+def SearchItems(parent: dict<any>, pattern: string, prefix: string): list<dict<any>>
+    # no groups
+    # separators
+    # recursive
+
+    var result: list<dict<any>> = []
+    for item in parent.sub
+        # no eval 'nameeval'
+
+        if item.name == '-'
+            # nop
+        elseif has_key(item, 'sub')
+            for sitem in item.sub
+                if sitem.name == '-'
+                    #nop
+                else
+                    sitem.name = item.name .. '>>' .. sitem.name
+                endif
+            endfor
+            #echom 'prefix=' .. string(prefix)
+            #echom 'item.sub=' .. string(item.sub)
+            var subresult: list<dict<any>> = SearchItems(item, pattern, item.name)
+            for sitem in subresult
+                result = add(result, sitem)
+            endfor
+        elseif item.name =~? pattern
+            result = add(result, item)
+        endif
+    endfor
+
+    return result
+enddef
+
 def IndexOfDefault(item: dict<any>): number
     if !has_key(item, 'sub')
         return -1
@@ -269,6 +431,11 @@ def DeriveParent(root: dict<any>, indices: list<number>): dict<any>
         parent = parent.sub[i]
     endfor
     return parent
+enddef
+
+def SearchToPattern(search: string): string
+    var ss: list<string> = split(search, '\zs')
+    return '\v.*' .. join(ss, '.*') .. '.*'
 enddef
 
 # vim: set et ft=vim sts=4 sw=4 ts=4 tw=78 : 
