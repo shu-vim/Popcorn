@@ -53,7 +53,7 @@ enddef
 def! g:Popcorn_remove(name: string)
     var idx = -1
     for i in range(len(g:PopcornItems))
-        if g:PopcornItems[i].name == name
+        if g:PopcornItems[i].name ==? name
             idx = i
             break
         endif
@@ -149,7 +149,7 @@ def Filter(winid: number, key: string): bool
     var root = Root(g:PopcornItems)
     var parent = DeriveParent(root, indices)
 
-    if key == 'q' || key == "\<esc>"
+    if key ==# 'q' || key == "\<esc>"
         popup_close(winid, -1)
         return true
     endif
@@ -168,7 +168,7 @@ def Filter(winid: number, key: string): bool
         return true
     endif
 
-    if len(indices) >= 1 && (key == 'h' || key == "\<s-tab>")
+    if len(indices) >= 1 && (key ==# 'h' || key == "\<s-tab>")
         # pop an index
         if len(indices) >= 1
             remove(indices, len(indices) - 1)
@@ -182,7 +182,7 @@ def Filter(winid: number, key: string): bool
     endif
 
     if has_key(parent.sub[lnum - 1], 'sub')
-        if (key == 'l' || key == "\<tab>")
+        if (key ==# 'l' || key == "\<tab>")
             # push an index
             indices = add(indices, lnum - 1)
             setwinvar(winid, 'Popcorn_parentIndices', indices)
@@ -212,8 +212,8 @@ def Filter(winid: number, key: string): bool
     endif
 
     # skip '-'
-    if key == 'j' || key == 'k' || key == "\<down>" || key == "\<up>"
-        var dir = (key == 'j' || key == "\<down>") ? 1 : -1
+    if key ==# 'j' || key ==# 'k' || key == "\<down>" || key == "\<up>"
+        var dir = (key ==# 'j' || key ==# "\<down>") ? 1 : -1
         call win_execute(winid, 'w:lastlnum = line("$")')
         var lastlnum = getwinvar(winid, 'lastlnum', 1)
 
