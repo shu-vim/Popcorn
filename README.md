@@ -48,7 +48,7 @@ g:PopcornItems = [
         {name: 'Split(|)', execute: 'vsplit'},
     ]},
     {name: '-'},
-    {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', execute: 'Popcorn'},
+    {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', skip: true},
 ]
 ```
 
@@ -59,12 +59,13 @@ You can also use g:Popcorn_clear(), g:Popcorn_add() and g:Popcorn_remove().
 ### Rule
 
 1. Each item must have `name`
-2. Must have one of (`execute`, `executeeval`, `sub`)
+2. Must have one of (`execute`, `executeeval`, `sub`, `skip`)
 3. `nameeval` is eval()-ed when displayed (priority: `nameeval` > `name`)
 4. `executeeval` is eval()-ed when executed (priority: `executeeval` > `execute`)
 5. 'execute' (and 'executeeval') can be a string or a list of strings
 6. 'default' item is executed when enter is pressed on its parent
 7. A separator is {name: '-'}
+8. 'skip' is true if the cursor skips the item
 
 ### Highlights
 

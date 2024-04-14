@@ -28,7 +28,7 @@ if !exists('g:PopcornItems')
             {name: 'Split(|)', execute: 'vsplit'},
         ]},
         {name: '-'},
-        {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', execute: 'Popcorn'},
+        {name: 'Time', nameeval: 'strftime("%Y-%m-%d %H:%M:%S")', skip: true},
     ]
 endif
 
@@ -211,7 +211,7 @@ def Filter(winid: number, key: string): bool
         endif
     endif
 
-    # skip '-'
+    # skip '-' or skip:true
     if key ==# 'j' || key ==# 'k' || key == "\<down>" || key == "\<up>"
         var dir = (key ==# 'j' || key ==# "\<down>") ? 1 : -1
         call win_execute(winid, 'w:lastlnum = line("$")')
@@ -219,7 +219,7 @@ def Filter(winid: number, key: string): bool
 
         var nxt = (lnum + dir + lastlnum - 1) % lastlnum + 1
         var count = 0
-        while parent.sub[nxt - 1].name == '-' && nxt != lnum
+        while parent.sub[nxt - 1].name == '-' || (has_key(parent.sub[nxt - 1], 'skip') && parent.sub[nxt - 1].skip) && nxt != lnum
             nxt = (nxt + dir + lastlnum - 1) % lastlnum + 1
         endwhile
         if nxt != lnum + dir
@@ -387,11 +387,11 @@ def SearchItems(parent: dict<any>, pattern: string, prefix: string): list<dict<a
     for item in parent.sub
         # no eval 'nameeval'
 
-        if item.name == '-'
+        if item.name == '-' || (has_key(item, 'skip') && item.skip)
             # nop
         elseif has_key(item, 'sub')
             for sitem in item.sub
-                if sitem.name == '-'
+                if sitem.name == '-' || (has_key(sitem, 'skip') && sitem.skip)
                     #nop
                 else
                     sitem.name = item.name .. '>>' .. sitem.name
