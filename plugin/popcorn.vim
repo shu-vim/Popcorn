@@ -10,6 +10,10 @@ if !exists('g:PopcornSeparatorHighlight')
     g:PopcornSeparatorHighlight = 'Comment'
 endif
 
+if !exists('g:PopcornSkipHighlight')
+    g:PopcornSkipHighlight = 'Comment'
+endif
+
 if !exists('g:PopcornSearchOnUpper')
     g:PopcornSearchOnUpper = false
 endif
@@ -88,6 +92,7 @@ def! g:Popcorn_popup()
 
     matchadd(g:PopcornGroupHighlight, '\v ([(].*[)])?\s*[>]{2}', 0, -1, {'window': winid})
     matchadd(g:PopcornSeparatorHighlight, '\v-{3,}', 0, -1, {'window': winid})
+    matchadd(g:PopcornSkipHighlight, '\v^ .*', 0, -1, {'window': winid})
 enddef
 
 def Root(items: list<dict<any>>): dict<any>
@@ -347,6 +352,12 @@ def BuildItemLines(parent: dict<any>): list<string>
         else
             item.name_ = item.name
         endif
+        item.name_ = trim(item.name_)
+
+        # include a space to highlight the item
+        if has_key(item, 'skip') && item.skip
+            item.name_ = ' ' .. item.name_
+        endif
 
         var defidx: list<number> = IndexOfDefault(item)
         if defidx != []
@@ -367,6 +378,13 @@ def BuildItemLines(parent: dict<any>): list<string>
             maxwid = w
         endif
     endfor
+
+    for item in parent.sub
+        if has_key(item, 'skip') && item.skip
+            item.name_ = repeat(' ', (maxwid - strdisplaywidth(item.name_)) / 2) .. item.name_
+        endif
+    endfor
+
 
     var lines: list<string> = []
     for item in parent.sub
