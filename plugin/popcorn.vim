@@ -200,9 +200,10 @@ def Filter(winid: number, key: string): bool
             setwinvar(winid, 'Popcorn_parentIndices', indices)
             parent = DeriveParent(root, indices)
 
-            var defidx: number = IndexOfDefault(parent)
-            if defidx != -1
-                popup_close(winid, defidx + 1)
+            var defidx: list<number> = IndexOfDefault(parent)
+            if defidx != []
+                indices = extend(indices, defidx[: -2])
+                popup_close(winid, defidx[-1] + 1)
             else
                 # render child items
                 Redraw(winid, bufnr, parent, lnum)
@@ -347,9 +348,18 @@ def BuildItemLines(parent: dict<any>): list<string>
             item.name_ = item.name
         endif
 
-        var defidx: number = IndexOfDefault(item)
-        if defidx != -1
-            item.name_ = item.name_ .. ' (' .. item.sub[defidx].name .. ')'
+        var defidx: list<number> = IndexOfDefault(item)
+        if defidx != []
+            var defname: string = ""
+            var curr = item
+            for i in defidx
+                curr = curr.sub[i]
+                if defname != ""
+                    defname ..= ">>"
+                endif
+                defname ..= curr.name
+            endfor
+            item.name_ = item.name_ .. ' (' .. defname .. ')'
         endif
 
         var w = strdisplaywidth(item.name_)
@@ -411,18 +421,33 @@ def SearchItems(parent: dict<any>, pattern: string, prefix: string): list<dict<a
     return result
 enddef
 
-def IndexOfDefault(item: dict<any>): number
+def IndexOfDefault(item: dict<any>): list<number>
     if !has_key(item, 'sub')
-        return -1
+        return []
     endif
 
-    for i in range(len(item.sub))
-        if get(item.sub[i], 'default', false)
-            return i
-        endif
-    endfor
+    var result: list<number> = []
+    var curr = item
+    while curr != {}
+        var found: dict<any> = {}
 
-    return -1
+        if !has_key(curr, 'sub')
+            break
+        endif
+        for i in range(len(curr.sub))
+            if get(curr.sub[i], 'default', false)
+                result = add(result, i)
+                found = curr.sub[i]
+                break
+            endif
+        endfor
+        if found == {}
+            break
+        endif
+        curr = found
+    endwhile
+
+    return result
 enddef
 
 def DeriveParent(root: dict<any>, indices: list<number>): dict<any>
